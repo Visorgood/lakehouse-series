@@ -1,4 +1,21 @@
 *.class
 *.log
 
+# Scala
+*.tasty
+*.jar
+
+# SBT
+.bsp/
+.metals/
+project/target/
+project/project/
+target/
+
+# IDE
 .idea/
+.vscode/
+.scala-build/
+.bloop/
+
+.claude/

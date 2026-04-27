@@ -1,0 +1,6 @@
+[
+  {"id": 1, "user": "alice", "event": "login",    "amount": null, "ts": "2025-01-01T10:00:00Z"},
+  {"id": 2, "user": "bob",   "event": "purchase", "amount": 49.9, "ts": "2025-01-01T10:05:00Z"},
+  {"id": 3, "user": "alice", "event": "purchase", "amount": 12.5, "ts": "2025-01-01T10:08:00Z"},
+  {"id": 4, "user": "bob",   "event": "logout",   "amount": null, "ts": "2025-01-01T10:10:00Z"}
+]
