@@ -9,7 +9,8 @@ val icebergVersion = "1.10.1"
 libraryDependencies ++= Seq(
   "org.apache.spark"  %% "spark-sql"                        % sparkVersion,
   "org.apache.iceberg" % "iceberg-spark-runtime-4.0_2.13"  % icebergVersion,
-  "org.apache.hadoop"  % "hadoop-aws"                       % "3.4.1"
+  "org.apache.hadoop"  % "hadoop-aws"                       % "3.4.1",
+  "org.postgresql"     % "postgresql"                       % "42.7.4"
 )
 
 assembly / assemblyMergeStrategy := {
