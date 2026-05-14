@@ -1,51 +1,39 @@
 package com.example
 
-import com.example.common.SparkSessionFactory
+import com.example.common.Models.{Order, orderTableName}
+import com.example.common.{Models, SparkSessionFactory, TableUtils}
+import org.apache.spark.sql.functions.partitioning.days
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-object CreateNewTable {
+object CreateNewTable extends App {
 
-  private val namespace = "lakekeeper.default"
-  private val table = s"$namespace.orders"
+  val spark = SparkSessionFactory.create("CreateNewTable")
 
-  case class Order(
-    order_id:    Long,
-    customer_id: Long,
-    status:      String,
-    amount:      BigDecimal,
-    created_at:  Timestamp
+  import spark.implicits._
+
+  spark.sql(s"CREATE NAMESPACE IF NOT EXISTS lakekeeper.default")
+  spark.sql(s"DROP TABLE IF EXISTS $orderTableName PURGE")
+
+  val newData = Seq(
+    Order(0L, 100L, "completed", BigDecimal("15.20"), Timestamp.valueOf(LocalDateTime.of(2024, 1, 14, 3, 25))),
+    Order(1L, 101L, "completed", BigDecimal("99.90"), Timestamp.valueOf(LocalDateTime.of(2024, 1, 15, 10, 0))),
+    Order(2L, 102L, "pending", BigDecimal("149.00"), Timestamp.valueOf(LocalDateTime.of(2024, 1, 15, 11, 30))),
+    Order(3L, 103L, "completed", BigDecimal("59.99"), Timestamp.valueOf(LocalDateTime.of(2024, 1, 16, 9, 0)))
   )
+  newData.toDS.to(Models.orderSchema)
+    .writeTo(orderTableName)
+    .tableProperty("format-version", "3")
+    .tableProperty("write.format.default", "parquet")
+    .tableProperty("write.metadata.compression-codec", "none")
+    .tableProperty("write.parquet.compression-codec", "zstd")
+    .partitionedBy(days($"created_at"))
+    .createOrReplace()
 
-  def main(args: Array[String]): Unit = {
-    val spark = SparkSessionFactory.create("CreateNewTable")
-    import spark.implicits._
+  spark.table(orderTableName).show()
 
-    spark.sql(s"CREATE NAMESPACE IF NOT EXISTS $namespace")
+  TableUtils.showTableSnapshots(spark, orderTableName)
 
-    spark.sql(s"""
-      CREATE TABLE IF NOT EXISTS $table (
-        order_id    BIGINT,
-        customer_id BIGINT,
-        status      STRING,
-        amount      DECIMAL(10, 2),
-        created_at  TIMESTAMP
-      )
-      USING iceberg
-      PARTITIONED BY (days(created_at))
-    """)
-
-    val orders = Seq(
-      Order(1, 101, "completed", BigDecimal("99.90"),  Timestamp.valueOf(LocalDateTime.of(2024, 1, 15, 10,  0))),
-      Order(2, 102, "pending",   BigDecimal("149.00"), Timestamp.valueOf(LocalDateTime.of(2024, 1, 15, 11, 30))),
-      Order(3, 103, "completed", BigDecimal("59.99"),  Timestamp.valueOf(LocalDateTime.of(2024, 1, 16,  9,  0)))
-    )
-
-    orders.toDF().writeTo(table).append()
-
-    spark.table(table).show()
-
-    spark.stop()
-  }
+  spark.stop()
 }
